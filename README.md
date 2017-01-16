@@ -1,4 +1,4 @@
-# tempHumidityPressureCollector
+# weatherStationReciver
 
 part of WatherStationProject
 

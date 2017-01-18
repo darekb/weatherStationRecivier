@@ -68,22 +68,14 @@ uint8_t slDS18B20_ReadBit(){
 }
 
 uint8_t slDS18B20_ReadByte(){
-  uint8_t i=8;
-  uint8_t n=0;
-  while(i--){
-    //shift one position right and store read value
-    n = n>>1;
-    n|=slDS18B20_ReadBit();
-  }
-  return n;
+  uint8_t b = 0;
+
+  for (uint8_t k = 0; k < 8; k++) b |= (slDS18B20_ReadBit() << k);
+
+  return b;
 }
 uint8_t slDS18B20_WriteByte(uint8_t byte){
-  uint8_t i=8;
-  while(i--){
-    //write actual bit and shift new position right to make the next bit ready
-    slDS18B20_WriteBit(byte&1);
-    byte = byte>>1;
-  }
+  for (uint8_t mask = 1; mask; mask <<= 1) slDS18B20_WriteBit(byte & mask);
   return 0;
 }
 
@@ -93,20 +85,44 @@ uint8_t slDS18B20_ReturnTemp(char *buffer){
   int8_t   digit;
   uint16_t decimal;
 
-  //reset skip ROM and start temperature conversion
   if(slDS18B20_Reset()){
-    slUART_WriteString("error reset\r\n");
+#if showDebugDataDS18B20 == 1
+    slUART_WriteString("error reset1\r\n");
+#endif
     return 1;
   }
+  slDS18B20_WriteByte(slDS18B20_CMD_SKIPROM);
+  slDS18B20_WriteByte(slDS18B20_CMD_CONVERTTEMP);
+  _delay_ms(200);
+  if(slDS18B20_Reset()){
+#if showDebugDataDS18B20 == 1
+    slUART_WriteString("error reset1\r\n");
+#endif
+    return 1;
+  }
+  //reset skip ROM and start temperature conversion
   slDS18B20_WriteByte(slDS18B20_CMD_SKIPROM);
   slDS18B20_WriteByte(slDS18B20_CMD_RSCRATCHPAD);
 
   //store temperature integer digitd and decimal digits
   temperature[0] = slDS18B20_ReadByte();
   temperature[1] = slDS18B20_ReadByte();
+
   if(slDS18B20_Reset()){
+#if showDebugDataDS18B20 == 1
+    slUART_WriteString("error reset2\r\n");
+#endif
     return 1;
   }
+
+#if showDebugDataDS18B20 == 1
+  slUART_WriteString("temperature[0]: ");
+  slUART_LogHex(temperature[0]);
+  slUART_WriteString("\r\n");
+  slUART_WriteString("temperature[1]: ");
+  slUART_LogHex(temperature[1]);
+  slUART_WriteString("\r\n");
+#endif
 
   //store temperature integer digits and decimal digits
   digit = temperature[0]>>4;
@@ -114,6 +130,5 @@ uint8_t slDS18B20_ReturnTemp(char *buffer){
   decimal = temperature[0]&0xf;
   decimal *= slDS18B20_DECIMAL_TEPS_12BIT;
   sprintf(buffer,"%+d.%04u", digit, decimal);
-
   return 0;
 }

@@ -1,6 +1,7 @@
 #ifndef SLDS18B20_H_
 #define SLDS18B20_H_
 
+#define showDebugDataDS18B20 0
 
 #define slDS18B20_PORT PORTB
 #define slDS18B20_DDR  DDRB

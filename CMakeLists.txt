@@ -14,6 +14,7 @@ set(AVR_H_FUSE 0xD9)
 set(AVR_UPLOADTOOL avrdude)
 set(AVR_PROGRAMMER arduino)
 set(AVR_UPLOADTOOL_PORT /dev/ttyUSB0)
+set(AVR_UPLOADTOOL_OPTIONS -b57600)
 
 set(CMAKE_BUILD_TYPE Release)
 

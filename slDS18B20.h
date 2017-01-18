@@ -28,6 +28,6 @@
 #define slDS18B20_DECIMAL_TEPS_12BIT  625
 
 uint8_t slDS18B20_ReturnTemp(char *buffer);
-
+uint8_t slDS18B20_Init();
 
 #endif /* SLDS18B20_H_ */

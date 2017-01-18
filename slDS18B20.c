@@ -132,3 +132,9 @@ uint8_t slDS18B20_ReturnTemp(char *buffer){
   sprintf(buffer,"%+d.%04u", digit, decimal);
   return 0;
 }
+
+uint8_t slDS18B20_Init(){
+  char buffer[8];
+  //init is firsr measure is always 85 celsius
+  return slDS18B20_ReturnTemp(buffer);
+}

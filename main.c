@@ -11,7 +11,7 @@
 #define F_CPU 16000000UL
 #endif
 
-#define showDebugDataMain 1
+#define showDebugDataMain 0
 
 #include "main.h"
 #include "slUart.h"
@@ -101,11 +101,13 @@ int main(void) {
 #endif
         //sending data from transmitter to uart
         slUART_WriteString(wiad);
+        slUART_WriteString("\r\n");
 
         //after getting data from transmitter geting data temperature from DS18B20
         getTempFromDS18B20(wiad);
         //sending temperature measure to uart 
         slUART_WriteString(wiad);
+        slUART_WriteString("\r\n");
 
         //reset data for new loop
         strcpy(wiad, "");

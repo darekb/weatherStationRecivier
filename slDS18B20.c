@@ -124,12 +124,16 @@ uint8_t slDS18B20_ReturnTemp(char *buffer){
   slUART_WriteString("\r\n");
 #endif
 
-  //store temperature integer digits and decimal digits
-  digit = temperature[0]>>4;
-  digit |= (temperature[1]&0x07)<<4;
+  digit = (temperature[1] << 4) | (temperature[0] >> 4);
+
+  if ( digit & 0x8000 )
+  {
+    digit ^= 0xffff;
+    digit = -digit;
+  }
   decimal = temperature[0]&0xf;
   decimal *= slDS18B20_DECIMAL_TEPS_12BIT;
-  sprintf(buffer,"%+d.%04u", digit, decimal);
+  sprintf(buffer,"%d.%04u", digit, decimal);
   return 0;
 }
 

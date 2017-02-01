@@ -7,7 +7,7 @@
 
 uint8_t slDS18B20_Reset(){
   uint8_t i;
-  
+  cli();
   //pull line low and wait 480us
   slDS18B20_LOW();
   slDS18B20_OUTPUT_MODE();
@@ -20,7 +20,7 @@ uint8_t slDS18B20_Reset(){
   //store line value and wait until the completion of 480us period
   i=(slDS18B20_PIN & (1<<slDS18B20_DQ));
   _delay_us(480);
-
+  sei();
   //return the value read from the presence pulse (0=OK, 1=WRONG)
   return i;
 }
@@ -45,7 +45,6 @@ uint8_t slDS18B20_WriteBit(uint8_t bit){
 
 uint8_t slDS18B20_ReadBit(){
   uint8_t bit=0;
-  
   cli();
   //pull line low for 1us
   slDS18B20_LOW();

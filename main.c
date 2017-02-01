@@ -9,6 +9,8 @@
 #define F_CPU 16000000UL
 #endif
 
+#define showDebugDataMain 0
+
 #include "main.h"
 #include "slUart.h"
 #include "VirtualWire.h"
@@ -21,10 +23,15 @@ uint8_t i;
 volatile uint8_t stage = 0;
 
 void resetBuffer(char *buffer);
+
 void sendDataToUART(char *buffer);
+
 uint8_t checkEndForData(char *str);
+
 void stage0_listenRX();
+
 void stage1_collectData(char *buffer);
+
 uint8_t stage2_getTempFromDS18B20(char *buffer);
 
 int main(void) {
@@ -43,40 +50,45 @@ int main(void) {
   //init DS18B20 temperature sensor
   //DS18B20 is set on pin PB0 (8 in arduino)
   if (slDS18B20_Init()) {
+
+#if showDebugDataMain == 1
     slUART_WriteString("Error init slDS18B20\r\n");
+#endif
     return 1;
   }
 
 
+#if showDebugDataMain == 1
   slUART_WriteString("Start.\r\n");
+#endif
 
   //initialize data
   strcpy(wiad, "");
   stage = 0;
   while (1) {
     switch (stage) {
-    case 0:
-      stage0_listenRX();
-      break;
-    case 1:
-      stage1_collectData(wiad);
-      break;
-    case 2:
-      if(stage2_getTempFromDS18B20(wiad)){
-        stage = 0;
-      }
-      break;
+      case 0:
+        stage0_listenRX();
+        break;
+      case 1:
+        stage1_collectData(wiad);
+        break;
+      case 2:
+        if (stage2_getTempFromDS18B20(wiad)) {
+          stage = 0;
+        }
+        break;
     }
   }
   return 0;
 }
 
-void resetBuffer(char *buffer){
-  memset(buffer, 0, VW_MAX_MESSAGE_LEN * (sizeof buffer[0]) );
+void resetBuffer(char *buffer) {
+  memset(buffer, 0, VW_MAX_MESSAGE_LEN * (sizeof buffer[0]));
 }
 
-void sendDataToUART(char *buffer){
-  slUART_WriteString("\r\n");
+void sendDataToUART(char *buffer) {
+  //slUART_WriteString("\r\n");
   slUART_WriteString(buffer);
   slUART_WriteString("\r\n");
 }
@@ -108,7 +120,10 @@ void stage1_collectData(char *buffer) {
 uint8_t stage2_getTempFromDS18B20(char *buffer) {
   resetBuffer(buffer);
   if (slDS18B20_ReturnTemp(buffer)) {
+
+#if showDebugDataMain == 1
     slUART_WriteString("Error get temperature from slDS18B20\r\n");
+#endif
     return 1;
   }
   strcat(buffer, "|5.0|12|z");

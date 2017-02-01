@@ -1,0 +1,5 @@
+1. missing data under RF transmition () NO
+2. wrong usb cable (errors in transmitions) (change cable?) YES
+3. wrong made shield (add capacitors, and LR filter?) MEBY
+
+ kondensator 100nF pomiędzy napięcie zasilające a masę

@@ -11,7 +11,7 @@
 #define F_CPU 16000000UL
 #endif
 
-#define showDebugDataMain 0
+#define showDebugDataMain 1
 
 #include "main.h"
 #include "slUart.h"
@@ -26,9 +26,9 @@
 uint8_t buf[VW_MAX_MESSAGE_LEN];
 uint8_t buflen = VW_MAX_MESSAGE_LEN;
 uint8_t *bufPointer;
-char wiad[39] = "";
+char wiad[255] = "";
 uint8_t i, j;
-char tmp1[30] = "";
+volatile uint8_t stage = 0;
 
 
 uint8_t checkEndForData(char *str) {
@@ -42,6 +42,18 @@ void getTempFromDS18B20(char *wiad) {
 #endif
   }
   strcat(wiad, "|5.0|12|z");
+}
+void collectData(char *buffor){
+  LED_TOG;
+  //collect data from buffer from transmitter
+  for (i = 0; i < buflen; i++) {
+    buffor[j] = buf[i];
+    j++;
+    bufPointer++;
+  }
+  if (checkEndForData(buffor)) {
+    stage = 2;
+  }
 }
 
 int main(void) {
@@ -80,7 +92,19 @@ int main(void) {
 
   while (1) {
     LED_OFF;
+//    switch(stage){
+//      case 1:
+//        collectData();
+//        if (checkEndForData(wiad)) {
+//          stage = 2;
+//        }
+//        break;
+//      case 2:
+//        collectData();
+//        break;
+//    }
     if (vw_get_message(buf, &buflen)) {
+      stage = 1;
       //reset pointer
       bufPointer = buf;
 #if showDebugDataMain == 1
@@ -91,29 +115,38 @@ int main(void) {
       LED_TOG;
       //collect data from buffer from transmitter
       for (i = 0; i < buflen; i++) {
-        wiad[j] = *bufPointer;
+        wiad[j] = buf[i];
         j++;
         bufPointer++;
       }
-      if (checkEndForData(wiad)) {
 #if showDebugDataMain == 1
-        slUART_WriteString("all data from transmiter get\r\n");
+      slUART_WriteString("one transmit datat\r\n");
+      //sending data from transmitter to uart
+      slUART_WriteString(wiad);
 #endif
-        //sending data from transmitter to uart
-        slUART_WriteString(wiad);
-        slUART_WriteString("\r\n");
-
-        //after getting data from transmitter geting data temperature from DS18B20
-        getTempFromDS18B20(wiad);
-        //sending temperature measure to uart 
-        slUART_WriteString(wiad);
-        slUART_WriteString("\r\n");
-
-        //reset data for new loop
-        strcpy(wiad, "");
-        j = 0;
-
-      }
+//      if (checkEndForData(wiad)) {
+//#if showDebugDataMain == 1
+//        slUART_WriteString("all data from transmiter get\r\n");
+//#endif
+//        //sending data from transmitter to uart
+//        slUART_WriteString(wiad);
+//        slUART_WriteString("\r\n");
+//        //reset data for new loop
+////        strcpy(wiad, "");
+////        j = 0;
+//        _delay_ms(2000);
+//        //geting data temperature from DS18B20
+//        getTempFromDS18B20(wiad);
+//        //sending temperature measure to uart
+//        slUART_WriteString(wiad);
+//        slUART_WriteString("\r\n");
+//
+//
+//        //reset data for new loop
+//        strcpy(wiad, "");
+//        j = 0;
+//
+//      }
       LED_TOG;
     }
   }

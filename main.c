@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
-
 #ifndef F_CPU
 #define F_CPU 16000000UL
 #endif
@@ -16,54 +14,20 @@
 #include "VirtualWire.h"
 #include "slDS18B20.h"
 
-#define LED (1 << PD7)
-#define LED_TOG PORTD ^= LED
-#define LED_ON PORTD |= LED
-#define LED_OFF PORTD &=~ LED
-
 uint8_t buf[VW_MAX_MESSAGE_LEN];
 uint8_t buflen = VW_MAX_MESSAGE_LEN;
-uint8_t *bufPointer;
 char wiad[VW_MAX_MESSAGE_LEN] = "";
-uint8_t i, j;
+uint8_t i;
 volatile uint8_t stage = 0;
 
-
-uint8_t checkEndForData(char *str) {
-  return strchr(str, 'z') ? 1 : 0;
-}
-void stage0_listenRX() {
-  if (vw_get_message(buf, &buflen)) {
-    stage = 1;
-  }
-}
-void stage1_collectData(char *buffer) {
-  strcpy(buffer, "");
-  LED_TOG;
-  //collect data from buffer from transmitter
-  for (i = 0; i < buflen; i++) {
-    buffer[i] = buf[i];
-  }
-  LED_TOG;
-  //if (checkEndForData(buffor)) {
-  slUART_WriteString(buffer);
-  stage = 2;
-  //}
-}
-void stage2_getTempFromDS18B20(char *buffer) {
-  strcpy(buffer, "");
-  if (slDS18B20_ReturnTemp(buffer)) {
-    slUART_WriteString("Error get temperature from slDS18B20\r\n");
-    return 1;
-  }
-  strcat(buffer, "|5.0|12|z");
-  slUART_WriteString(buffer);
-  stage = 0;
-}
+void resetBuffer(char *buffer);
+void sendDataToUART(char *buffer);
+uint8_t checkEndForData(char *str);
+void stage0_listenRX();
+void stage1_collectData(char *buffer);
+uint8_t stage2_getTempFromDS18B20(char *buffer);
 
 int main(void) {
-  //set direction of port for led
-  DDRD |= LED;
 
   //init UART transmition
   slUART_SimpleTransmitInit();
@@ -84,13 +48,10 @@ int main(void) {
   }
 
 
-  LED_ON;
   slUART_WriteString("Start.\r\n");
 
   //initialize data
   strcpy(wiad, "");
-  j = 0;
-  LED_OFF;
   stage = 0;
   while (1) {
     switch (stage) {
@@ -107,5 +68,51 @@ int main(void) {
       break;
     }
   }
+  return 0;
+}
+
+void resetBuffer(char *buffer){
+  memset(buffer, 0, VW_MAX_MESSAGE_LEN * (sizeof buffer[0]) );
+}
+
+void sendDataToUART(char *buffer){
+  slUART_WriteString("\r\n");
+  slUART_WriteString(buffer);
+  slUART_WriteString("\r\n");
+}
+
+uint8_t checkEndForData(char *str) {
+  return strchr(str, 'z') ? 1 : 0;
+}
+
+void stage0_listenRX() {
+  if (vw_get_message(buf, &buflen)) {
+    stage = 1;
+  }
+}
+
+void stage1_collectData(char *buffer) {
+  resetBuffer(buffer);
+  //collect data from buffer from transmitter
+  cli();
+  for (i = 0; i < buflen; i++) {
+    buffer[i] = buf[i];
+  }
+  sei();
+  //if (checkEndForData(buffor)) {
+  sendDataToUART(buffer);
+  stage = 2;
+  //}
+}
+
+uint8_t stage2_getTempFromDS18B20(char *buffer) {
+  resetBuffer(buffer);
+  if (slDS18B20_ReturnTemp(buffer)) {
+    slUART_WriteString("Error get temperature from slDS18B20\r\n");
+    return 1;
+  }
+  strcat(buffer, "|5.0|12|z");
+  sendDataToUART(buffer);
+  stage = 0;
   return 0;
 }

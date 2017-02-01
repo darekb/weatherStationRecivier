@@ -1,0 +1,4 @@
+1. iterrups off and on in DS18B20 1-Wire lib
+2. problem z współzadaniowością
+  - nim zostały wysłane dane do uart przychodzi nowy pomiar (mało prawdopodobne)
+3 nie resetowałem wartości wiad (przepełnienie bufora?)

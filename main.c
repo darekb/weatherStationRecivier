@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <avr/wdt.h>
 
 #ifndef F_CPU
 #define F_CPU 16000000UL
@@ -35,6 +36,7 @@ void stage1_collectData(char *buffer);
 uint8_t stage2_getTempFromDS18B20(char *buffer);
 
 int main(void) {
+  wdt_enable(WDTO_8S);
 
   //init UART transmition
   slUART_SimpleTransmitInit();
@@ -111,13 +113,17 @@ void stage1_collectData(char *buffer) {
     buffer[i] = buf[i];
   }
   sei();
-  //if (checkEndForData(buffor)) {
-  sendDataToUART(buffer);
-  stage = 2;
-  //}
+  if (checkEndForData(buffer)) {
+    sendDataToUART(buffer);
+    stage = 2;
+  } else {
+    stage = 0;
+  }
 }
 
 uint8_t stage2_getTempFromDS18B20(char *buffer) {
+  _delay_ms(3000);
+  wdt_reset();
   resetBuffer(buffer);
   if (slDS18B20_ReturnTemp(buffer)) {
 
